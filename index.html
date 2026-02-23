@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Member App - নোটিশ বোর্ড</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #333;
+            font-size: 24px;
+        }
+        
+        .header p {
+            color: #666;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .login-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-align: center;
+            display: none;
+        }
+        
+        .login-section.show {
+            display: block;
+        }
+        
+        .gmail-login-btn {
+            background: #DB4437;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 18px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.3s;
+        }
+        
+        .gmail-login-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .gmail-login-btn i {
+            font-size: 24px;
+        }
+        
+        .notices-section {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            display: none;
+        }
+        
+        .notices-section.show {
+            display: block;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .user-details {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .user-email {
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .logout-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        
+        .notices-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .notice-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .notice-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .notice-content {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .notice-date {
+            color: #999;
+            font-size: 12px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .no-notices {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .notice-title {
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📢 Member নোটিশ বোর্ড</h1>
+            <p>সকল নোটিশ দেখতে লগইন করুন</p>
+        </div>
+        
+        <div class="login-section show" id="loginSection">
+            <button class="gmail-login-btn" onclick="loginWithGmail()">
+                <i>📧</i> Gmail দিয়ে লগইন করুন
+            </button>
+        </div>
+        
+        <div class="notices-section" id="noticesSection">
+            <div class="user-info">
+                <div class="user-details">
+                    <div class="user-avatar" id="userAvatar">M</div>
+                    <span class="user-email" id="userEmail">loading...</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">লগআউট</button>
+            </div>
+            
+            <div class="notices-list" id="noticesList">
+                <div class="loading">নোটিশ লোড হচ্ছে...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-analytics-compat.js"></script>
+
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAbqR4gx2zn81P53n1X5H79QI2pEEPAsOc",
+            authDomain: "madechat-bc6c6.firebaseapp.com",
+            projectId: "madechat-bc6c6",
+            storageBucket: "madechat-bc6c6.firebasestorage.app",
+            messagingSenderId: "240183365263",
+            appId: "1:240183365263:web:23cb17c03acc7be977eafa",
+            measurementId: "G-WTLRB08LTE"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const analytics = firebase.analytics();
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Google Auth Provider
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        // Check auth state
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in
+                document.getElementById('loginSection').classList.remove('show');
+                document.getElementById('noticesSection').classList.add('show');
+                
+                document.getElementById('userEmail').textContent = user.email;
+                document.getElementById('userAvatar').textContent = user.email.charAt(0).toUpperCase();
+                
+                loadNotices();
+            } else {
+                // User is signed out
+                document.getElementById('loginSection').classList.add('show');
+                document.getElementById('noticesSection').classList.remove('show');
+            }
+        });
+
+        // Login with Gmail
+        function loginWithGmail() {
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    console.log('Login successful:', result.user.email);
+                })
+                .catch((error) => {
+                    console.error('Login error:', error);
+                    alert('লগইন করতে সমস্যা হয়েছে: ' + error.message);
+                });
+        }
+
+        // Logout
+        function logout() {
+            auth.signOut()
+                .then(() => {
+                    console.log('Logout successful');
+                })
+                .catch((error) => {
+                    console.error('Logout error:', error);
+                });
+        }
+
+        // Load notices from Firestore
+        function loadNotices() {
+            const noticesList = document.getElementById('noticesList');
+            
+            db.collection('notices')
+                .orderBy('timestamp', 'desc')
+                .onSnapshot((snapshot) => {
+                    if (snapshot.empty) {
+                        noticesList.innerHTML = '<div class="no-notices">কোন নোটিশ নেই</div>';
+                        return;
+                    }
+                    
+                    let html = '';
+                    snapshot.forEach((doc) => {
+                        const notice = doc.data();
+                        const date = notice.timestamp ? notice.timestamp.toDate() : new Date();
+                        const formattedDate = date.toLocaleDateString('bn-BD', {
+                            day: 'numeric',
+                            month: 'long',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        
+                        html += `
+                            <div class="notice-card">
+                                <div class="notice-title">${notice.title || 'শিরোনামহীন'}</div>
+                                <div class="notice-content">${notice.content || ''}</div>
+                                <div class="notice-date">📅 ${formattedDate}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    noticesList.innerHTML = html;
+                }, (error) => {
+                    console.error('Error loading notices:', error);
+                    noticesList.innerHTML = '<div class="no-notices">নোটিশ লোড করতে সমস্যা হয়েছে</div>';
+                });
+        }
+    </script>
+</body>
+</html>
